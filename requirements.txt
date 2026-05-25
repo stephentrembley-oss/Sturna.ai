@@ -14,5 +14,5 @@ pgvector
 python-dotenv
 httpx
 stripe
-oqs-python
+# oqs-python removed - requires system liboqs build (use cryptography hybrid for now)
 pysnark
