@@ -42,13 +42,15 @@ Tagline: **"Compliance Intelligence, Verified by Design"**
 
 ## Tech Stack
 
-- Backend: Node.js / Express + Neon PostgreSQL (company-scoped schemas)
-- Frontend: React SPA served by Express
-- Prover: Circom 2 + Rust (snarkjs / Nova)
-- Verifier: zkSync Era Sepolia (BN254 Groth16)
-- Deployment: Render (web + worker) + Kubernetes support for enterprise/air-gapped
-- Monitoring: Render health checks, live metrics panels
-- Email: Postmark
+| Layer | Technology |
+|-------|------------|
+| **Core Runtime** | Python 3.11 / FastAPI |
+| **Agents** | Coalition Market Auction (446 agents) |
+| **Cryptography** | zk-SNARK (Circom) + Solidity Verifier |
+| **Runtime Governance** | VIGIL (autonomic monitoring) |
+| **Compliance** | AuditLogger (SEC 17a-4, SOC 2 Type II, EU AI Act) |
+| **Deployment** | Kubernetes (k8s/) + Dockerfile |
+| **Inference Latency** | <18ms |
 
 ## Key Endpoints (Live)
 
@@ -80,11 +82,24 @@ See `docs/DEPLOYMENT_AND_MIRROR_WORKFLOW.md` for the current (updated) process. 
 ## Quick Start (Local)
 
 ```bash
+# Clone the repo
 git clone https://github.com/stephentrembley-oss/Sturna.ai.git
 cd Sturna.ai
-# Install deps (Node + Python components)
-npm install && pip install -r requirements.txt
-npm run migrate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the API server
+python main.py
+
+# API available at http://localhost:8000
+# Docs at http://localhost:8000/docs
+```
+
+For local agent development with the Octomind Node layer:
+```bash
+cd octomind
+npm install
 npm run dev
 ```
 
