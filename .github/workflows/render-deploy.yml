@@ -1,9 +1,15 @@
 name: Render Deploy
-on: [push]
+
+on:
+  push:
+    branches: [main]
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Deploy to Render
-        run: echo 'Deploy triggered'
+      - name: Trigger Render Deploy
+        run: |
+          echo "Deployment triggered by push to main."
+          echo "Render will automatically deploy via Git integration."
+          echo "See Render dashboard for live deployment status."
