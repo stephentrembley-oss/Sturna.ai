@@ -1,1 +1,1 @@
-Full content from octomind.zip - agent JWT service
+Full service from octomind.zip

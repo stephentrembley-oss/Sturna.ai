@@ -1,1 +1,1 @@
-Full content from octomind.zip - agent memory service
+Full service from octomind.zip

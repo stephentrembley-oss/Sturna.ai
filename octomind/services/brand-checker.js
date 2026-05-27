@@ -1,1 +1,1 @@
-Full content from octomind.zip - brand checker
+Full service from octomind.zip

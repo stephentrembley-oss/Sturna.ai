@@ -1,1 +1,1 @@
-Full content from octomind.zip - collusion detector
+Full service from octomind.zip

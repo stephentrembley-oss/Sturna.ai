@@ -1,1 +1,1 @@
-Full content from octomind.zip - massive ingestion service
+Full service from octomind.zip

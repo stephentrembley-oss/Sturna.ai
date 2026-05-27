@@ -1,1 +1,1 @@
-Full content from octomind.zip - investigation agent
+Full service from octomind.zip

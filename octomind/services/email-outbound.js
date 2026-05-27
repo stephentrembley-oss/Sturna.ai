@@ -1,1 +1,1 @@
-Full content from octomind.zip - email outbound service
+Full service from octomind.zip

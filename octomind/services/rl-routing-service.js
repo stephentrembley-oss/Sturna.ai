@@ -1,1 +1,1 @@
-Full content from octomind.zip - rl routing service
+Full service from octomind.zip

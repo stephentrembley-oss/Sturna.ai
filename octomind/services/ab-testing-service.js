@@ -1,1 +1,1 @@
-Full content from octomind.zip - ab testing service
+Full service from octomind.zip

@@ -1,1 +1,1 @@
-Full content from octomind.zip - scanner email worker
+Full service from octomind.zip

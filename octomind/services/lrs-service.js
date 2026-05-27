@@ -1,1 +1,1 @@
-Full content from octomind.zip - lrs service
+Full service from octomind.zip

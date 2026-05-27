@@ -1,1 +1,1 @@
-Full content from octomind.zip - scanner email templates
+Full service from octomind.zip
