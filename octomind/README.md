@@ -1,38 +1,67 @@
-# Octomind Layer
+# Octomind Services Layer
 
-This directory contains the biomimetic multi-agent orchestration layer extracted from `octomind.zip` (May 2026).
+This directory contains the **biomimetic multi-agent orchestration layer** extracted from `octomind.zip` (May 2026).
 
-## Purpose
+## Overview
 
-Provides the core self-healing, coalition-based, and compliance-aware agent infrastructure for Sturna.ai, including:
+The Octomind layer provides Sturna.ai with:
 
-- **ShivaLimbOrchestrator** — Limb regeneration, checkpointing, and self-healing
-- **Octopus Neural Layer** — Distributed autonomy and 4D coalition scoring
-- **Coalition Market Auction** engine
-- **MARCH / GSAR / Control Harmonization** compliance gates
+- Self-healing agent orchestration (ShivaLimbOrchestrator)
+- Distributed neural architecture inspired by octopus biology
+- Coalition Market Auction system for task routing
+- Strong compliance & governance primitives (MARCH, GSAR, Control Harmonization)
 - Large library of specialized agent services
 
-## Structure
+## Directory Structure
 
-- `services/` — Individual service modules (170+ files)
-- `index.js` — Barrel file for easy importing of key services
+- `services/` — Individual service modules (~170+ files)
+- `index.js` — Barrel file for convenient importing of key services
 
-## Origin
+## Key Services
 
-Extracted from the `octomind.zip` archive in Google Drive. This layer was previously part of the (now deprecated) dual-repo setup with Polsia-Inc/octomind.
+### Core Biomimetic
+- `ShivaLimbOrchestrator` — Limb lifecycle, regeneration, checkpointing
+- `OctopusNeuralLayer` — Suckerotopy, distributed autonomy
+- `SelfHealingRouter` — Automatic failover and coalition reformation
+- `CrisprAgentEditor` — Meta-adaptation / agent editing
+- `CephalopodRecoder` — RNA-style self-editing layer
+
+### Coalition & Auction
+- `CoalitionEngine`
+- `CoalitionClearing`
+- `CoalitionPerformance`
+
+### Compliance & Governance
+- `ControlHarmonization` (Gold Nugget)
+- `CompliancePolygraph`
+- `FederatedComplianceNetwork`
+- `RegulatoryPolicyGraph`
+
+### Quality & Safety
+- `QualityGates`
+- `MarchCheckerConfig` / `MarchAdversarial`
+- `ConstitutionalFilter`
+- `GSARRecovery`
 
 ## Usage
 
 ```js
-const {
-  ShivaLimbOrchestrator,
-  CoalitionEngine,
-  ControlHarmonization
+const { 
+  ShivaLimbOrchestrator, 
+  CoalitionEngine, 
+  ControlHarmonization 
 } = require('./octomind/services');
 ```
 
-Most services can also be required directly when needed.
+You can also require services directly:
+```js
+const MarchConfig = require('./octomind/services/march-checker-config');
+```
 
-## Status
+## Origin & Status
 
-This layer is actively being integrated into the main Sturna.ai codebase (May 2026).
+Extracted from the `octomind.zip` archive. This layer was previously maintained in the (now deprecated) dual-repo workflow. It is currently being integrated into the main `Sturna.ai` codebase (May 2026).
+
+## Notes
+
+Many services contain detailed JSDoc-style comments explaining ownership and responsibilities. This layer forms the foundation of Sturna’s self-healing and verifiable agent execution capabilities.
