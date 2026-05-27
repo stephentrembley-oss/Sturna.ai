@@ -1,1 +1,1 @@
-Full content from octomind.zip - MCP manifest
+Full service from octomind.zip

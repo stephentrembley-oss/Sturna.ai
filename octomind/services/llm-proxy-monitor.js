@@ -1,1 +1,1 @@
-Full content from octomind.zip - LLM proxy monitor
+Full service from octomind.zip

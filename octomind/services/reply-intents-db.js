@@ -1,1 +1,1 @@
-Full content from octomind.zip - reply intents db
+Full service from octomind.zip
