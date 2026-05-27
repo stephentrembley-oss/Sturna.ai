@@ -3,23 +3,49 @@
 Biomimetic multi-agent orchestration layer for Sturna.ai.
 
 ## Purpose
-Self-healing, coalition-based agent system with strong compliance and verifiability.
+Provides self-healing, coalition-based agent orchestration with strong compliance and verifiability features.
 
-## Current Status (May , 2026)
+## Current Status (May 2026)
 
-**Import from octomind.zip**: Complete (or near complete).
+- Large number of services imported from `octomind.zip`
+- Core biomimetic, coalition, compliance, and intent/memory services are present
+- Many services are intentionally lightweight (service interfaces + placeholders)
+- Full integration and hardening is ongoing
 
-- All major services imported
-- Multiple cleanup rounds completed
-- Documentation and index improved
+## Layer Philosophy
 
-## Next Steps
-- Final review of the layer
-- Integration into main application
-- Hardening and testing
+The Octomind layer follows a **biomimetic + compliance-first** design:
+
+- Services are designed as small, focused, replaceable units
+- Many start as structured placeholders that can be expanded
+- Emphasis on auditability, self-healing, and coalition coordination
 
 ## Key Components
-- Biomimetic Core
-- Coalition Auction System
-- Compliance & Governance (MARCH, GSAR, Control Harmonization)
-- Intent & Memory Layer
+
+### Biomimetic Core
+- `ShivaLimbOrchestrator` — Limb lifecycle, regeneration, checkpointing
+- `OctopusNeuralLayer` — Distributed autonomy
+- `SelfHealingRouter`, `CrisprAgentEditor`, `CephalopodRecoder`
+
+### Coalition & Auction System
+- `CoalitionEngine` + supporting services
+
+### Compliance & Governance
+- `ControlHarmonization`, `CompliancePolygraph`, `MARCH` / `GSAR` gates
+
+### Intent & Memory
+- `IntentEngine`, memory consolidation, anomaly detection
+
+## Usage
+
+```js
+const {
+  ShivaLimbOrchestrator,
+  CoalitionEngine,
+  ControlHarmonization
+} = require('./octomind/services');
+```
+
+## Contributing
+
+See the root `CONTRIBUTING.md`. When working on Octomind services, prefer small, focused modules with clear ownership comments.
