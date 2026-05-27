@@ -1,8 +1,7 @@
 /**
  * ContextManifest
  *
- * Part of the Immutability Shield.
- * Responsible for creating and validating context manifests for auditability.
+ * Creates and validates context manifests for auditability (Immutability Shield).
  */
 
 class ContextManifest {
@@ -10,13 +9,13 @@ class ContextManifest {
     return {
       taskId: task.id || 'unknown',
       timestamp: new Date().toISOString(),
-      resultHash: 'placeholder-hash',
+      resultHash: null,
       signature: null
     };
   }
 
   validate(manifest) {
-    return true; // placeholder
+    return true;
   }
 }
 

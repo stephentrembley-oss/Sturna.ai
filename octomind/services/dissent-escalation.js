@@ -1,14 +1,12 @@
 /**
  * DissentEscalation
  *
- * Handles cases where agents dissent or raise concerns.
- * Part of the adversarial review and safety mechanisms.
+ * Handles dissent and escalation in multi-agent decisions.
  */
 
 class DissentEscalation {
-  escalate(dissent) {
-    console.log('[DissentEscalation] Escalating dissent:', dissent);
-    return { escalated: true, action: 'review' };
+  escalate(dissentEvent) {
+    return { escalated: true, reason: dissentEvent.reason };
   }
 }
 

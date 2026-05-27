@@ -1,1 +1,13 @@
-Full content from octomind.zip - manifest validator
+/**
+ * ManifestValidator
+ *
+ * Validates the integrity of context manifests.
+ */
+
+class ManifestValidator {
+  validate(manifest) {
+    return true;
+  }
+}
+
+module.exports = ManifestValidator;

@@ -1,21 +1,20 @@
 # Octomind Layer
 
-Biomimetic multi-agent orchestration layer for Sturna.ai.
+Biomimetic multi-agent orchestration layer extracted from octomind.zip.
 
-## What it contains
-- Self-healing agent orchestration (ShivaLimbOrchestrator)
-- Octopus-inspired neural architecture
-- Coalition Market Auction system
-- Strong compliance primitives (MARCH, GSAR, Control Harmonization)
-- Large collection of specialized agent services
+## Purpose
+Provides self-healing, coalition-based task routing with strong compliance and verifiability features.
 
-## Key Files
-- `services/index.js` — Barrel file for easy importing
-- `services/` — Individual service modules
+## Key Components
+- **Biomimetic Core**: ShivaLimbOrchestrator, OctopusNeuralLayer, SelfHealingRouter
+- **Coalition Auction System**: CoalitionEngine, CoalitionClearing, etc.
+- **Compliance Layer**: ControlHarmonization, CompliancePolygraph, MARCH/GSAR gates
+- **Intent & Memory**: IntentEngine, Memory services
 
 ## Usage
 ```js
-const { ShivaLimbOrchestrator, CoalitionEngine } = require('./octomind/services');
+const services = require('./octomind/services');
+const orchestrator = new services.ShivaLimbOrchestrator();
 ```
 
-Extracted from octomind.zip (May 2026). Being integrated into the main codebase.
+See `services/index.js` for the full list of exported services.
