@@ -1,1 +1,1 @@
-Full content from octomind.zip - intent engine (core)
+Full content from octomind.zip - core intent engine

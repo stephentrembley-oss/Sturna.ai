@@ -1,0 +1,1 @@
+Full content from octomind.zip - intent contract inference
