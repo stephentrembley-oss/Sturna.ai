@@ -1,0 +1,1 @@
+Full content from octomind.zip - scanner email templates

@@ -1,0 +1,1 @@
+Full content from octomind.zip - investigation agent
