@@ -1,12 +1,12 @@
 /**
  * LeakDetector
  *
- * Detects potential information leaks or contamination.
+ * Detects potential data leaks or contamination in agent outputs.
  */
 
 class LeakDetector {
-  scan(data) {
-    return { leakFound: false };
+  scan(output) {
+    return { leakDetected: false };
   }
 }
 
