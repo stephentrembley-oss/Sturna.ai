@@ -1,5 +1,5 @@
 /**
- * Octomind Services Index
+ * Octomind Services Index (Final)
  */
 
 module.exports = {
