@@ -13,9 +13,9 @@ router = APIRouter(prefix="/api/v1/ai-inventory", tags=["AI System Inventory"])
 def register_system(
     system_id: str,
     name: str,
+    owner: str,
     description: str = "",
     risk_level: str = "high",
-    owner: str,
     db: Session = Depends(get_db),
 ):
     """
