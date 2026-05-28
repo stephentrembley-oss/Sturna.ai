@@ -1,7 +1,7 @@
 import hashlib
 import json
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
 
 from app.models.evidence_package import EvidencePackage
@@ -12,7 +12,7 @@ from app.models.ai_system import AISystem
 class SOC2EvidenceService:
     """
     Generates tamper-evident compliance evidence packages.
-    Aggregates data from Human Reviews, AI Systems, and other sources.
+    Aggregates Human Reviews, AI Systems, and decision events.
     """
 
     def __init__(self, db: Session):
@@ -24,9 +24,9 @@ class SOC2EvidenceService:
         period_start: datetime,
         period_end: datetime,
         generated_by: str,
+        extra_context: Optional[Dict[str, Any]] = None,
     ) -> EvidencePackage:
 
-        # Pull human reviews in the period
         reviews = (
             self.db.query(HumanReviewLog)
             .filter(
@@ -36,10 +36,18 @@ class SOC2EvidenceService:
             .all()
         )
 
-        # Pull registered AI systems (current state)
         ai_systems = self.db.query(AISystem).all()
 
-        evidence = {
+        # Basic decision event summary from reviews
+        decision_summary = {
+            "total_decisions": len(reviews),
+            "approved": len([r for r in reviews if r.decision == "approve"]),
+            "rejected": len([r for r in reviews if r.decision == "reject"]),
+            "escalated": len([r for r in reviews if r.decision == "escalate"]),
+            "modified": len([r for r in reviews if r.decision == "modify"]),
+        }
+
+        evidence: Dict[str, Any] = {
             "period": {
                 "start": period_start.isoformat(),
                 "end": period_end.isoformat(),
@@ -56,6 +64,7 @@ class SOC2EvidenceService:
                 for r in reviews
             ],
             "human_reviews_count": len(reviews),
+            "decision_summary": decision_summary,
             "ai_systems_registered": [
                 {
                     "system_id": s.system_id,
@@ -66,10 +75,13 @@ class SOC2EvidenceService:
                 for s in ai_systems
             ],
             "ai_systems_count": len(ai_systems),
-            "prompt_logs_count": 0,   # TODO: integrate real prompt logging
+            "prompt_logs_count": 0,
             "model_registry": {},
             "access_decisions": [],
         }
+
+        if extra_context:
+            evidence["extra_context"] = extra_context
 
         package_id = hashlib.sha256(
             json.dumps(evidence, sort_keys=True, default=str).encode()
