@@ -72,12 +72,13 @@ See `docs/DEPLOYMENT_AND_MIRROR_WORKFLOW.md` for the current (updated) process. 
 
 ## Documentation
 
+- `docs/ARCHITECTURE.md` — High-level architecture overview
 - `docs/MASTER_IMPLEMENTATION_DOCUMENT.md` — Full v2.2 architecture, roadmap, GTM
 - `docs/BRAND_VOICE_AND_IDENTITY_GUIDELINES.md` — Exact voice, lexicon, what to say/avoid
 - `docs/MARKET_AND_CUSTOMER_INTELLIGENCE.md` — Buyer personas, outreach templates, competitive landscape, revenue projections
 - `docs/DEPLOYMENT_AND_MIRROR_WORKFLOW.md` — Current deployment & ops process
 - `circuits/` & `contracts/` — zk-SNARK compliance circuit + Groth16 verifier
-- `octomind/` — Core biomimetic orchestration layer (ShivaLimbOrchestrator, agent utilities, selected services)
+- `octomind/` — Core biomimetic orchestration layer
 
 ## Quick Start (Local)
 
