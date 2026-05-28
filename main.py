@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # Compliance routers
 from app.api.routes.human_reviews import router as human_reviews_router
 from app.api.routes.evidence import router as evidence_router
+from app.api.routes.ai_inventory import router as ai_inventory_router
 
 app = FastAPI(title="Sturna.ai - Galaxy Enterprise v2", description="100+ Domain Compliance AI Orchestration Platform")
 
@@ -12,6 +13,7 @@ app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_credentials=True, 
 # Include compliance routers
 app.include_router(human_reviews_router)
 app.include_router(evidence_router)
+app.include_router(ai_inventory_router)
 
 
 @app.get('/')
