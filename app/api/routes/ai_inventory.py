@@ -11,13 +11,17 @@ router = APIRouter(prefix="/api/v1/ai-inventory", tags=["AI System Inventory"])
 
 @router.post("/register", summary="Register or update an AI system")
 def register_system(
-    system_id: str = Query(...),
-    name: str = Query(...),
-    description: str = Query(""),
-    risk_level: str = Query("high"),
-    owner: str = Query(...),
+    system_id: str,
+    name: str,
+    description: str = "",
+    risk_level: str = "high",
+    owner: str,
     db: Session = Depends(get_db),
 ):
+    """
+    Register a new AI system or update an existing one.
+    Used for NIST AI RMF and EU AI Act compliance tracking.
+    """
     inventory = AISystemInventory(db)
     return inventory.register_system(
         system_id=system_id,
@@ -37,7 +41,7 @@ def list_systems(
     return inventory.list_systems(risk_level)
 
 
-@router.get("/nist-report", summary="Generate NIST-style report")
+@router.get("/nist-report", summary="Generate NIST-style compliance report")
 def get_nist_report(db: Session = Depends(get_db)):
     inventory = AISystemInventory(db)
     return inventory.generate_nist_report()
