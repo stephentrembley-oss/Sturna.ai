@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.database import engine, Base
+
 # Compliance routers
 from app.api.routes.human_reviews import router as human_reviews_router
 from app.api.routes.evidence import router as evidence_router
@@ -20,6 +22,13 @@ app.include_router(ai_inventory_router)
 
 # Instrument tracing
 tracing.instrument_fastapi(app)
+
+
+# Create tables on startup (for development / early Render deploys)
+@app.on_event("startup")
+def create_tables():
+    Base.metadata.create_all(bind=engine)
+    print("[Startup] Database tables created/verified")
 
 
 @app.get('/')
