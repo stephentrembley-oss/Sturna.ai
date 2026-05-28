@@ -6,12 +6,13 @@ from sqlalchemy.orm import Session
 
 from app.models.evidence_package import EvidencePackage
 from app.models.human_review import HumanReviewLog
+from app.models.ai_system import AISystem
 
 
 class SOC2EvidenceService:
     """
     Generates tamper-evident compliance evidence packages.
-    Pulls real data from HumanReviewLog and other sources.
+    Aggregates data from Human Reviews, AI Systems, and other sources.
     """
 
     def __init__(self, db: Session):
@@ -25,7 +26,7 @@ class SOC2EvidenceService:
         generated_by: str,
     ) -> EvidencePackage:
 
-        # Pull real human review data from the period
+        # Pull human reviews in the period
         reviews = (
             self.db.query(HumanReviewLog)
             .filter(
@@ -34,6 +35,9 @@ class SOC2EvidenceService:
             )
             .all()
         )
+
+        # Pull registered AI systems (current state)
+        ai_systems = self.db.query(AISystem).all()
 
         evidence = {
             "period": {
@@ -52,7 +56,17 @@ class SOC2EvidenceService:
                 for r in reviews
             ],
             "human_reviews_count": len(reviews),
-            "prompt_logs_count": 0,   # TODO: integrate with actual prompt logging
+            "ai_systems_registered": [
+                {
+                    "system_id": s.system_id,
+                    "name": s.name,
+                    "risk_level": s.risk_level,
+                    "eu_ai_act_high_risk": s.eu_ai_act_high_risk,
+                }
+                for s in ai_systems
+            ],
+            "ai_systems_count": len(ai_systems),
+            "prompt_logs_count": 0,   # TODO: integrate real prompt logging
             "model_registry": {},
             "access_decisions": [],
         }
