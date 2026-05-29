@@ -6,20 +6,16 @@ from app.models.human_review import HumanReviewLog
 
 class ExplainabilityService:
     """
-    Hybrid Explainability Service.
+    Hybrid Explainability Service (A + B).
 
-    - Lightweight mode: Generates explanations on-the-fly from existing review logs.
-    - Can be extended to store structured explanation snapshots (future robust mode).
+    Lightweight mode: Generates rich, structured explanations on-the-fly.
+    Future robust mode: Can store explanation snapshots.
     """
 
     def __init__(self, db: Session):
         self.db = db
 
     def get_explanation_for_task(self, task_id: str) -> Dict[str, Any]:
-        """
-        Generate a 'Show Your Work' explanation for a given task.
-        Pulls from HumanReviewLog records and enriches with context.
-        """
         logs = (
             self.db.query(HumanReviewLog)
             .filter_by(task_id=task_id)
@@ -44,9 +40,9 @@ class ExplainabilityService:
                 "reviewer_role": log.reviewer_role,
                 "timestamp": log.created_at.isoformat() if log.created_at else None,
                 "is_pending": log.is_pending,
+                "metadata": log.metadata_json or {},
             })
 
-        # Build a simple summary
         final_decision = logs[-1].decision if logs else None
         has_human_review = any(log.reviewer_id != "system" for log in logs)
 
@@ -57,29 +53,46 @@ class ExplainabilityService:
             "has_human_review": has_human_review,
             "decision_count": len(logs),
             "decisions": decisions,
-            "summary": self._generate_summary(final_decision, has_human_review, len(logs)),
+            "summary": self._generate_rich_summary(final_decision, has_human_review, len(logs), logs),
+            "triggered_rules": self._extract_triggered_rules(logs),
+            "confidence_note": self._generate_confidence_note(final_decision, has_human_review),
         }
 
-    def _generate_summary(self, final_decision: str, has_human_review: bool, decision_count: int) -> str:
+    def _generate_rich_summary(self, final_decision: str, has_human_review: bool, decision_count: int, logs: List) -> str:
         if not final_decision:
             return "No decision recorded."
 
-        base = f"Final decision: {final_decision.upper()}. "
+        parts = [f"Final decision: {final_decision.upper()}."]
 
         if has_human_review:
-            base += f"Involved human oversight across {decision_count} review step(s). "
+            parts.append(f"Human oversight applied across {decision_count} step(s).")
         else:
-            base += "Automated decision with no human review. "
+            parts.append("Fully automated decision (no human review).")
 
-        base += "Full audit trail available via decision chain."
-        return base
+        last_justification = logs[-1].justification if logs and logs[-1].justification else None
+        if last_justification:
+            parts.append(f"Key rationale: {last_justification}")
 
-    # Placeholder for future robust mode (storing structured explanation snapshots)
+        parts.append("Full immutable audit trail available.")
+        return " ".join(parts)
+
+    def _extract_triggered_rules(self, logs: List[HumanReviewLog]) -> List[str]:
+        rules = set()
+        for log in logs:
+            if log.metadata_json and isinstance(log.metadata_json, dict):
+                if "triggered_rules" in log.metadata_json:
+                    rules.update(log.metadata_json["triggered_rules"])
+                if "regulations" in log.metadata_json:
+                    rules.update(log.metadata_json["regulations"])
+        return list(rules) if rules else ["General compliance review"]
+
+    def _generate_confidence_note(self, final_decision: str, has_human_review: bool) -> str:
+        if has_human_review:
+            return "High confidence due to human validation."
+        if final_decision in ["approve", "reject"]:
+            return "Automated decision — recommend human review for high-stakes tasks."
+        return "Requires human validation."
+
     def save_explanation_snapshot(self, task_id: str, explanation_data: Dict[str, Any]) -> bool:
-        """
-        Future: Store a structured explanation snapshot for later retrieval.
-        Currently a placeholder.
-        """
-        # TODO: Create ExplainabilitySnapshot model and persist here
-        print(f"[Explainability] Snapshot saved for task {task_id} (placeholder)")
+        print(f"[Explainability] Snapshot saved for task {task_id} (placeholder for future model)")
         return True
