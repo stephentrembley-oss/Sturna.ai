@@ -2,24 +2,18 @@ import hashlib
 import json
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
-
 from sqlalchemy.orm import Session
 
 from app.models.human_review import HumanReviewLog
 
 
 class HumanReviewService:
-    """
-    Production-ready Human Review Logger with tamper-evident hash chaining.
-    Critical for Reg S-P and EU AI Act Article 14 compliance.
-    """
-
     def __init__(self, db: Session):
         self.db = db
 
-    def _generate_chain_hash(self, previous_hash: str, current_data: dict) -> str:
-        payload = json.dumps(current_data, sort_keys=True, default=str)
-        return hashlib.sha256(f"{previous_hash}|{payload}".encode()).hexdigest()
+    def _chain_hash(self, prev_hash: str, data: dict) -> str:
+        payload = json.dumps(data, sort_keys=True, default=str)
+        return hashlib.sha256(f"{prev_hash}|{payload}".encode()).hexdigest()
 
     def log_decision(
         self,
@@ -30,8 +24,17 @@ class HumanReviewService:
         justification: Optional[str] = None,
         reviewer_role: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
+        triggered_rules: Optional[List[str]] = None,
+        regulations: Optional[List[str]] = None,
         previous_decision_id: Optional[str] = None,
     ) -> HumanReviewLog:
+
+        # Merge triggered_rules and regulations into metadata for explainability
+        final_metadata = metadata or {}
+        if triggered_rules:
+            final_metadata["triggered_rules"] = triggered_rules
+        if regulations:
+            final_metadata["regulations"] = regulations
 
         decision_id = hashlib.sha256(
             f"{task_id}:{agent_id}:{datetime.now(timezone.utc).isoformat()}".encode()
@@ -53,7 +56,7 @@ class HumanReviewService:
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
-        chain_hash = self._generate_chain_hash(previous_hash, current_data)
+        chain_hash = self._chain_hash(previous_hash, current_data)
 
         entry = HumanReviewLog(
             decision_id=decision_id,
@@ -65,7 +68,7 @@ class HumanReviewService:
             reviewer_role=reviewer_role,
             previous_decision_id=previous_decision_id,
             chain_hash=chain_hash,
-            metadata_json=metadata or {},
+            metadata_json=final_metadata,
             is_pending=(decision == "escalate"),
         )
 
@@ -74,19 +77,14 @@ class HumanReviewService:
         self.db.refresh(entry)
         return entry
 
-    def get_pending_reviews(self, reviewer_id: Optional[str] = None) -> List[HumanReviewLog]:
+    def get_pending_reviews(self, reviewer_id: Optional[str] = None):
         query = self.db.query(HumanReviewLog).filter_by(is_pending=True)
         if reviewer_id:
             query = query.filter_by(reviewer_id=reviewer_id)
         return query.order_by(HumanReviewLog.created_at.desc()).all()
 
-    def verify_chain_integrity(self, task_id: str) -> bool:
-        logs = (
-            self.db.query(HumanReviewLog)
-            .filter_by(task_id=task_id)
-            .order_by(HumanReviewLog.created_at.asc())
-            .all()
-        )
+    def verify_chain(self, task_id: str) -> bool:
+        logs = self.db.query(HumanReviewLog).filter_by(task_id=task_id).order_by(HumanReviewLog.created_at.asc()).all()
         if not logs:
             return True
 
@@ -101,8 +99,7 @@ class HumanReviewService:
                 "reviewer_id": log.reviewer_id,
                 "timestamp": log.created_at.isoformat() if log.created_at else None,
             }
-            expected_hash = self._generate_chain_hash(previous_hash, current_data)
-            if expected_hash != log.chain_hash:
+            if self._chain_hash(previous_hash, current_data) != log.chain_hash:
                 return False
             previous_hash = log.chain_hash
         return True
