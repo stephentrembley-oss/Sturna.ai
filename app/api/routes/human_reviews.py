@@ -15,10 +15,6 @@ def create_human_review(
     payload: HumanReviewCreate,
     db: Session = Depends(get_db),
 ):
-    """
-    Log a human oversight decision with tamper-evident hash chaining.
-    Critical for Reg S-P and EU AI Act Article 14 compliance.
-    """
     service = HumanReviewService(db)
     return service.log_decision(
         task_id=payload.task_id,
@@ -28,6 +24,8 @@ def create_human_review(
         justification=payload.justification,
         reviewer_role=payload.reviewer_role,
         metadata=payload.metadata,
+        triggered_rules=payload.triggered_rules,
+        regulations=payload.regulations,
         previous_decision_id=payload.previous_decision_id,
     )
 
@@ -44,5 +42,5 @@ def get_pending_reviews(
 @router.get("/verify/{task_id}", summary="Verify chain integrity for a task")
 def verify_review_chain(task_id: str, db: Session = Depends(get_db)):
     service = HumanReviewService(db)
-    is_valid = service.verify_chain_integrity(task_id)
+    is_valid = service.verify_chain(task_id)
     return {"task_id": task_id, "chain_valid": is_valid}
