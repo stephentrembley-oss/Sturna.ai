@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 
 # Compliance routers
 from app.api.routes.human_reviews import router as human_reviews_router
@@ -61,9 +61,10 @@ async def trust_page():
     return FileResponse(os.path.join(static_dir, "trust_page.html"))
 
 
-@app.get('/')
-def root():
-    return {'message': '✅ Sturna.ai Galaxy Enterprise v2 LIVE'}
+@app.get("/", include_in_schema=False)
+async def root():
+    return RedirectResponse(url="/pilot")
+
 
 @app.get('/health')
 def health():
