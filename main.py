@@ -1,5 +1,8 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 # Compliance routers
 from app.api.routes.human_reviews import router as human_reviews_router
@@ -19,6 +22,11 @@ from app.observability.tracing import tracing
 app = FastAPI(title="Sturna.ai - Galaxy Enterprise v2", description="100+ Domain Compliance AI Orchestration Platform")
 
 app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_credentials=True, allow_methods=['*'], allow_headers=['*'])
+
+# Serve frontend files
+static_dir = os.path.join(os.path.dirname(__file__), "..", "frontend")
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # Include all routers
 app.include_router(human_reviews_router)
@@ -40,6 +48,17 @@ def create_tables():
     from app.database import Base, engine
     Base.metadata.create_all(bind=engine)
     print("[Startup] Database tables created/verified")
+
+
+# Frontend pages
+@app.get("/pilot", response_class=FileResponse)
+async def pilot_page():
+    return FileResponse(os.path.join(static_dir, "pilot_dashboard.html"))
+
+
+@app.get("/trust", response_class=FileResponse)
+async def trust_page():
+    return FileResponse(os.path.join(static_dir, "trust_page.html"))
 
 
 @app.get('/')
