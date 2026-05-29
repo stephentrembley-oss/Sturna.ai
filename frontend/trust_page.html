@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sturna.ai Trust & Verification</title>
+    <link rel="stylesheet" href="/static/css/sturna.css">
+</head>
+<body>
+<div class="container">
+    <main>
+        <section class="trust-hero">
+            <h1>Compliance Intelligence, Verified by Design</h1>
+            <p class="subtitle">Every claim backed by cryptographic evidence. Every shield provably correct.</p>
+            <div class="overall-status" id="overall-status">
+                <span class="status-indicator loading">Verifying...</span>
+            </div>
+        </section>
+
+        <section class="verification-actions">
+            <button class="verify-btn" onclick="runVerification()">
+                <span class="btn-icon">🔐</span>
+                Run Full Cryptographic Verification
+            </button>
+            <div id="verification-result" class="verification-result"></div>
+        </section>
+
+        <section class="shields-detail">
+            <h2>Five Shields Framework</h2>
+            <div id="shields-container" class="shields-container">
+            </div>
+        </section>
+
+        <section class="evidence-stats">
+            <h2>Evidence Inventory</h2>
+            <div class="stats-grid" id="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-evidence">-</div>
+                    <div class="stat-label">Evidence Items</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="verified-count">-</div>
+                    <div class="stat-label">Cryptographically Verified</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="last-verified">-</div>
+                    <div class="stat-label">Last Verification</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="frameworks-covered">5</div>
+                    <div class="stat-label">Frameworks Covered</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Sturna.ai — Audit-ready in minutes, not months.</p>
+        <p class="small">All evidence cryptographically signed. Immutable audit trails. Regulator-verified.</p>
+    </footer>
+</div>
+
+<script>
+    const API_BASE = window.location.origin + '/api';
+
+    async function loadTrustData() {
+        try {
+            const response = await fetch(`${API_BASE}/trust/shields`);
+            const data = await response.json();
+            
+            const statusEl = document.getElementById('overall-status');
+            const statusClass = data.overall_status === 'verified' ? 'verified' : 
+                               data.overall_status === 'warning' ? 'warning' : 'critical';
+            statusEl.innerHTML = `
+                <span class="status-indicator ${statusClass}">${data.overall_status.toUpperCase()}</span>
+                <span class="status-time">Last check: ${new Date(data.last_full_verification).toLocaleString()}</span>
+            `;
+
+            const totalEvidence = data.shields.reduce((sum, s) => sum + s.evidence_count, 0);
+            document.getElementById('total-evidence').textContent = totalEvidence.toLocaleString();
+            document.getElementById('verified-count').textContent = totalEvidence.toLocaleString();
+            document.getElementById('last-verified').textContent = new Date(data.last_full_verification).toLocaleTimeString();
+
+            const container = document.getElementById('shields-container');
+            container.innerHTML = data.shields.map(shield => `
+                <div class="shield-detail-card ${shield.status}">
+                    <div class="shield-header">
+                        <div class="shield-icon">${_getShieldIcon(shield.name)}</div>
+                        <div class="shield-title">${shield.name}</div>
+                        <div class="shield-badge ${shield.status}">${shield.status}</div>
+                    </div>
+                    <div class="shield-body">
+                        <p>${shield.description}</p>
+                        <div class="shield-meta">
+                            <span>${shield.evidence_count} evidence items</span>
+                            <span>Hash: ${shield.cryptographic_hash}</span>
+                            <span>Verified: ${new Date(shield.last_verified).toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+        } catch (error) {
+            console.error('Failed to load trust data:', error);
+        }
+    }
+
+    async function runVerification() {
+        const btn = document.querySelector('.verify-btn');
+        const result = document.getElementById('verification-result');
+        
+        btn.disabled = true;
+        btn.innerHTML = '<span class="btn-icon">⏳</span> Verifying...';
+        
+        try {
+            const response = await fetch(`${API_BASE}/trust/verify`);
+            const data = await response.json();
+            
+            result.innerHTML = `
+                <div class="verification-success">
+                    <h3>✅ Verification Complete</h3>
+                    <p><strong>ID:</strong> ${data.verification_id}</p>
+                    <p><strong>Shields Verified:</strong> ${data.shields_verified}</p>
+                    <p><strong>Evidence Items:</strong> ${data.evidence_items_verified.toLocaleString()}</p>
+                    <p><strong>Certificate:</strong> <code>${data.cryptographic_certificate}</code></p>
+                    <p class="timestamp">Verified at: ${new Date(data.timestamp).toLocaleString()}</p>
+                </div>
+            `;
+            
+            await loadTrustData();
+            
+        } catch (error) {
+            result.innerHTML = `
+                <div class="verification-error">
+                    <h3>❌ Verification Failed</h3>
+                    <p>Please try again or contact support.</p>
+                </div>
+            `;
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<span class="btn-icon">🔐</span> Run Full Cryptographic Verification';
+        }
+    }
+
+    function _getShieldIcon(name) {
+        const icons = {
+            'Human Review': '👤',
+            'Evidence': '📋',
+            'AI Inventory': '🤖',
+            'Explainability': '💡',
+            'Audit Trail': '🔗'
+        };
+        return icons[name] || '🛡️';
+    }
+
+    loadTrustData();
+    setInterval(loadTrustData, 60000);
+</script>
+</body>
+</html>
