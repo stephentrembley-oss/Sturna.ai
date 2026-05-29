@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sturna.ai Pilot Dashboard</title>
+    <link rel="stylesheet" href="/static/css/sturna.css">
+</head>
+<body>
+<div class="container">
+    <main>
+        <section class="hero">
+            <h1>Welcome, <span id="company-name">Your Firm</span></h1>
+            <p class="subtitle">Compliance Intelligence, Verified by Design</p>
+            <div class="countdown" id="countdown">14 days remaining</div>
+        </section>
+
+        <section class="compliance-score">
+            <div class="score-ring" id="score-ring">
+                <span class="score-value" id="compliance-score">0</span>
+                <span class="score-label">Compliance Score</span>
+            </div>
+            <div class="score-status" id="score-status">Starting scan...</div>
+        </section>
+
+        <section class="actions">
+            <h2>Quick Actions</h2>
+            <div class="action-grid">
+                <button class="action-card" onclick="runScan()">
+                    <div class="action-icon">🔍</div>
+                    <div class="action-title">Run Compliance Scan</div>
+                    <div class="action-desc">Identify gaps in 3-5 minutes</div>
+                </button>
+                
+                <button class="action-card" onclick="generateEvidence()">
+                    <div class="action-icon">📋</div>
+                    <div class="action-title">Generate Evidence</div>
+                    <div class="action-desc">Audit-ready documentation</div>
+                </button>
+                
+                <button class="action-card" onclick="scheduleWalkthrough()">
+                    <div class="action-icon">📅</div>
+                    <div class="action-title">Schedule Walkthrough</div>
+                    <div class="action-desc">1:1 with Stephen</div>
+                </button>
+                
+                <button class="action-card" onclick="downloadReport()">
+                    <div class="action-icon">📄</div>
+                    <div class="action-title">Download Report</div>
+                    <div class="action-desc">Latest audit findings</div>
+                </button>
+            </div>
+        </section>
+
+        <section class="scans">
+            <h2>Recent Scans</h2>
+            <div id="scans-list" class="list-container">
+                <div class="empty-state">No scans yet. Run your first scan above.</div>
+            </div>
+        </section>
+
+        <section class="evidence">
+            <h2>Evidence Packages</h2>
+            <div id="evidence-list" class="list-container">
+                <div class="empty-state">No evidence generated yet.</div>
+            </div>
+        </section>
+
+        <section class="trust">
+            <h2>Five Shields Status</h2>
+            <div id="shields-grid" class="shields-grid">
+                <div class="shield loading" data-shield="human-review">Human Review</div>
+                <div class="shield loading" data-shield="evidence">Evidence</div>
+                <div class="shield loading" data-shield="ai-inventory">AI Inventory</div>
+                <div class="shield loading" data-shield="explainability">Explainability</div>
+                <div class="shield loading" data-shield="audit-trail">Audit Trail</div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Questions? Contact stephen@sturna.ai</p>
+        <p class="small">Evidence cryptographically signed. Regulator-ready format.</p>
+    </footer>
+</div>
+
+<script>
+    const API_BASE = window.location.origin + '/api';
+    const PILOT_ID = new URLSearchParams(window.location.search).get('pid') || 'demo';
+
+    async function loadPilotData() {
+        try {
+            const response = await fetch(`${API_BASE}/pilot/workspace/${PILOT_ID}`);
+            const data = await response.json();
+            
+            document.getElementById('company-name').textContent = data.company_name;
+            document.getElementById('compliance-score').textContent = data.compliance_score;
+            document.getElementById('score-status').textContent = data.compliance_score >= 90 ? 'Audit Ready' : 
+                                                                  data.compliance_score >= 70 ? 'Near Ready' : 'In Progress';
+            
+            const daysRemaining = Math.max(0, Math.floor((new Date(data.expires_at) - new Date()) / (1000 * 60 * 60 * 24)));
+            document.getElementById('countdown').textContent = `${daysRemaining} days remaining`;
+            
+            const ring = document.getElementById('score-ring');
+            if (data.compliance_score >= 90) ring.classList.add('score-excellent');
+            else if (data.compliance_score >= 70) ring.classList.add('score-good');
+            else ring.classList.add('score-needs-work');
+
+        } catch (error) {
+            console.error('Failed to load pilot data:', error);
+            document.getElementById('company-name').textContent = 'Connection Error';
+        }
+    }
+
+    async function loadShields() {
+        try {
+            const response = await fetch(`${API_BASE}/trust/shields`);
+            const data = await response.json();
+            
+            const shieldElements = document.querySelectorAll('.shield');
+            shieldElements.forEach(el => {
+                const shieldName = el.getAttribute('data-shield');
+                const shieldData = data.shields.find(s => s.name.toLowerCase().replace(' ', '-') === shieldName);
+                
+                if (shieldData) {
+                    el.classList.remove('loading');
+                    el.classList.add(shieldData.status);
+                    el.innerHTML = `
+                        <div class="shield-name">${shieldData.name}</div>
+                        <div class="shield-status">${shieldData.status}</div>
+                        <div class="shield-evidence">${shieldData.evidence_count} items</div>
+                    `;
+                }
+            });
+        } catch (error) {
+            console.error('Failed to load shields:', error);
+        }
+    }
+
+    async function runScan() {
+        const framework = prompt('Which framework? (Reg_S_P, SEC_17a_4, HIPAA, SOC_2, EU_AI_Act)', 'Reg_S_P');
+        if (!framework) return;
+        
+        try {
+            const response = await fetch(`${API_BASE}/pilot/scan`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({pilot_id: PILOT_ID, framework, scan_type: 'full'})
+            });
+            const data = await response.json();
+            alert(`Scan started! ID: ${data.scan_id}. Check back in 3-5 minutes.`);
+        } catch (error) {
+            alert('Failed to start scan. Please try again.');
+        }
+    }
+
+    async function generateEvidence() {
+        const framework = prompt('Which framework? (Reg_S_P, SEC_17a_4, HIPAA, SOC_2, EU_AI_Act)', 'Reg_S_P');
+        if (!framework) return;
+        
+        try {
+            const response = await fetch(`${API_BASE}/pilot/evidence/generate`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    pilot_id: PILOT_ID,
+                    framework,
+                    include_human_review: true,
+                    include_ai_inventory: true,
+                    include_explainability: true,
+                    include_audit_trail: true
+                })
+            });
+            const data = await response.json();
+            alert(`Evidence generation started! ID: ${data.package_id}. Check back in 5-10 minutes.`);
+        } catch (error) {
+            alert('Failed to generate evidence. Please try again.');
+        }
+    }
+
+    function scheduleWalkthrough() {
+        window.open('mailto:stephen@sturna.ai?subject=Schedule RIA Pilot Walkthrough&body=Pilot ID: ' + PILOT_ID, '_blank');
+    }
+
+    async function downloadReport() {
+        window.open(`${API_BASE}/pilot/evidence/latest/download`, '_blank');
+    }
+
+    loadPilotData();
+    loadShields();
+    setInterval(loadShields, 30000);
+</script>
+</body>
+</html>
