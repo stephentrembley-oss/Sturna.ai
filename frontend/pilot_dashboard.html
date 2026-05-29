@@ -93,13 +93,19 @@
             const response = await fetch(`${API_BASE}/pilot/workspace/${PILOT_ID}`);
             const data = await response.json();
             
-            document.getElementById('company-name').textContent = data.company_name;
-            document.getElementById('compliance-score').textContent = data.compliance_score;
+            document.getElementById('company-name').textContent = data.company_name || 'Demo Pilot';
+            document.getElementById('compliance-score').textContent = data.compliance_score || 0;
             document.getElementById('score-status').textContent = data.compliance_score >= 90 ? 'Audit Ready' : 
                                                                   data.compliance_score >= 70 ? 'Near Ready' : 'In Progress';
             
-            const daysRemaining = Math.max(0, Math.floor((new Date(data.expires_at) - new Date()) / (1000 * 60 * 60 * 24)));
-            document.getElementById('countdown').textContent = `${daysRemaining} days remaining`;
+            // Handle missing expires_at gracefully
+            const countdownEl = document.getElementById('countdown');
+            if (data.expires_at) {
+                const daysRemaining = Math.max(0, Math.floor((new Date(data.expires_at) - new Date()) / (1000 * 60 * 60 * 24)));
+                countdownEl.textContent = `${daysRemaining} days remaining`;
+            } else {
+                countdownEl.textContent = "No active pilot";
+            }
             
             const ring = document.getElementById('score-ring');
             if (data.compliance_score >= 90) ring.classList.add('score-excellent');
@@ -109,6 +115,7 @@
         } catch (error) {
             console.error('Failed to load pilot data:', error);
             document.getElementById('company-name').textContent = 'Connection Error';
+            document.getElementById('countdown').textContent = "Unable to load data";
         }
     }
 
