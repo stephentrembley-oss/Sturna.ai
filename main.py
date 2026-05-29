@@ -23,10 +23,24 @@ app = FastAPI(title="Sturna.ai - Galaxy Enterprise v2", description="100+ Domain
 
 app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_credentials=True, allow_methods=['*'], allow_headers=['*'])
 
-# Serve frontend files
-static_dir = os.path.join(os.path.dirname(__file__), "..", "frontend")
+# Serve frontend files (robust path resolution for Render)
+def _get_static_dir():
+    base = os.path.dirname(__file__)
+    candidates = [
+        os.path.join(base, "..", "frontend"),           # Normal local structure
+        os.path.join(base, "frontend"),                   # If main.py is at root
+        "/opt/render/project/frontend",                   # Render typical path
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+    return os.path.join(base, "..", "frontend")  # fallback
+
+static_dir = _get_static_dir()
 if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
+else:
+    print(f"[Warning] Frontend directory not found at {static_dir}")
 
 # Include all routers
 app.include_router(human_reviews_router)
@@ -62,6 +76,7 @@ async def trust_page():
 
 
 @app.get("/", include_in_schema=False)
+@app.head("/", include_in_schema=False)
 async def root():
     return RedirectResponse(url="/pilot")
 
