@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any
+from pydantic import BaseModel
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 from enum import Enum
 
@@ -19,6 +19,8 @@ class HumanReviewCreate(BaseModel):
     reviewer_id: str
     reviewer_role: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
+    triggered_rules: Optional[List[str]] = None   # NEW: For explainability
+    regulations: Optional[List[str]] = None         # NEW: For explainability
     previous_decision_id: Optional[str] = None
 
 
