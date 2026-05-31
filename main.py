@@ -1,88 +1,189 @@
+"""Sturna.ai — FastAPI Application Entry Point (Phase 2 + API Wired).
+Run: uvicorn main:app --reload
+"""
 import os
-from fastapi import FastAPI
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.middleware.gzip import GZipMiddleware
+import structlog
 
-# Compliance routers
-from app.api.routes.human_reviews import router as human_reviews_router
-from app.api.routes.evidence import router as evidence_router
-from app.api.routes.ai_inventory import router as ai_inventory_router
-from app.api.routes.explainability import router as explainability_router
+from app.models.base import engine, Base
+from app.api import health, agents, memories, auctions, visitors, demos, intents
+from app.core.intent_engine import get_intent_engine
+from app.core.galaxy_manager import get_galaxy_manager
+from app.core.dag_scheduler import get_dag_scheduler
+from app.core.compliance import get_compliance_classifier
+from app.core.grounding import get_grounding_gate
 
-# P0 Sprint routers
-from app.api.routes.lead_gen import router as lead_gen_router
-from app.api.routes.pilot_onboarding import router as pilot_onboarding_router
-from app.api.routes.trust_shields import router as trust_shields_router
-from app.api.routes.health_expanded import router as health_expanded_router
+# Configure structured logging
+structlog.configure(
+    processors=[
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        structlog.processors.JSONRenderer()
+    ],
+    context_class=dict,
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    wrapper_class=structlog.stdlib.BoundLogger,
+    cache_logger_on_first_use=True,
+)
 
-# Observability
-from app.observability.tracing import tracing
-
-app = FastAPI(title="Sturna.ai - Galaxy Enterprise v2", description="100+ Domain Compliance AI Orchestration Platform")
-
-app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_credentials=True, allow_methods=['*'], allow_headers=['*'])
-
-# Serve frontend files (robust path resolution for Render)
-def _get_static_dir():
-    base = os.path.dirname(__file__)
-    candidates = [
-        os.path.join(base, "..", "frontend"),           # Normal local structure
-        os.path.join(base, "frontend"),                   # If main.py is at root
-        "/opt/render/project/frontend",                   # Render typical path
-    ]
-    for path in candidates:
-        if os.path.exists(path):
-            return path
-    return os.path.join(base, "..", "frontend")  # fallback
-
-static_dir = _get_static_dir()
-if os.path.exists(static_dir):
-    app.mount("/static", StaticFiles(directory=static_dir), name="static")
-else:
-    print(f"[Warning] Frontend directory not found at {static_dir}")
-
-# Include all routers
-app.include_router(human_reviews_router)
-app.include_router(evidence_router)
-app.include_router(ai_inventory_router)
-app.include_router(explainability_router)
-app.include_router(lead_gen_router)
-app.include_router(pilot_onboarding_router)
-app.include_router(trust_shields_router)
-app.include_router(health_expanded_router)
-
-# Instrument tracing
-tracing.instrument_fastapi(app)
+logger = structlog.get_logger("sturna")
 
 
-# Create tables on startup
-@app.on_event("startup")
-def create_tables():
-    from app.database import Base, engine
-    Base.metadata.create_all(bind=engine)
-    print("[Startup] Database tables created/verified")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan: startup and shutdown events."""
+    logger.info("sturna_startup", message="Sturna.ai Phase 2 starting up", version="2.1.0")
+
+    # Wire dependency injection
+    intent_engine = get_intent_engine()
+    galaxy_manager = get_galaxy_manager()
+    dag_scheduler = get_dag_scheduler()
+    compliance_classifier = get_compliance_classifier()
+    grounding_gate = get_grounding_gate()
+
+    intent_engine.set_galaxy_manager(galaxy_manager)
+    intent_engine.set_dag_scheduler(dag_scheduler)
+    intent_engine.set_grounding_gate(grounding_gate)
+
+    logger.info(
+        "dependencies_wired",
+        intent_engine="ok",
+        galaxy_manager="ok",
+        dag_scheduler="ok",
+        compliance="ok",
+        grounding="ok",
+    )
+
+    # Create tables if they don't exist (dev only; use Alembic in production)
+    if os.environ.get("AUTO_CREATE_TABLES", "false").lower() == "true":
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("sturna_db_init", message="Database tables auto-created")
+
+    yield
+
+    logger.info("sturna_shutdown", message="Sturna.ai shutting down")
+    await engine.dispose()
 
 
-# Frontend pages
-@app.get("/pilot", response_class=FileResponse)
-async def pilot_page():
-    return FileResponse(os.path.join(static_dir, "pilot_dashboard.html"))
+app = FastAPI(
+    title="Sturna.ai",
+    description="Compliance Intelligence, Verified by Design. Multi-agent orchestration with cryptographic proof.",
+    version="2.1.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+    lifespan=lifespan,
+)
+
+# === Middleware ===
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://sturna.ai",
+        "https://octomind-9fce.polsia.app",
+        "http://localhost:3000",
+        "http://localhost:8000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
-@app.get("/trust", response_class=FileResponse)
-async def trust_page():
-    return FileResponse(os.path.join(static_dir, "trust_page.html"))
+# === Global Exception Handler ===
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(
+        "unhandled_exception",
+        path=request.url.path,
+        method=request.method,
+        error=str(exc),
+        exc_info=True,
+    )
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "error": "Internal server error",
+            "detail": "An unexpected error occurred. The incident has been logged.",
+            "request_id": getattr(request.state, "request_id", "unknown"),
+        },
+    )
 
 
-@app.get("/", include_in_schema=False)
-@app.head("/", include_in_schema=False)
+# === Request ID Injection ===
+@app.middleware("http")
+async def add_request_id(request: Request, call_next):
+    import uuid
+    request.state.request_id = str(uuid.uuid4())[:8]
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request.state.request_id
+    return response
+
+
+# === Router Mounting ===
+app.include_router(health.router, tags=["Health"])
+app.include_router(agents.router, prefix="/api/agents", tags=["Agents"])
+app.include_router(memories.router, prefix="/api/memory", tags=["Memory"])
+app.include_router(auctions.router, prefix="/api/auctions", tags=["Auctions"])
+app.include_router(visitors.router, prefix="/api/visitors", tags=["Visitors"])
+app.include_router(demos.router, prefix="/api/demos", tags=["Demos"])
+app.include_router(intents.router, prefix="/api/intents", tags=["Intents"])
+
+
+# === Root Endpoint ===
+@app.get("/")
 async def root():
-    return RedirectResponse(url="/pilot")
+    return {
+        "service": "Sturna.ai",
+        "version": "2.1.0",
+        "tagline": "Compliance Intelligence, Verified by Design",
+        "status": "operational",
+        "docs": "/docs",
+        "health": "/health",
+        "features": [
+            "5-stage-intent-pipeline",
+            "coalition-market-auction",
+            "triple-gate-verification",
+        ],
+    }
 
 
-@app.get('/health')
-def health():
-    return {'status': 'healthy', 'version': 'enterprise-v2'}
+# === Health Endpoints ===
+@app.get("/health", tags=["Health"])
+async def health_check():
+    return {"status": "ok", "service": "sturna", "phase": 2}
 
-print('Sturna.ai full enterprise stack loaded')
+
+@app.get("/ready", tags=["Health"])
+async def readiness_check():
+    try:
+        engine = get_intent_engine()
+        ready = (
+            engine.galaxy_manager is not None and
+            engine.dag_scheduler is not None and
+            engine.grounding_gate is not None
+        )
+        return {
+            "status": "ready" if ready else "initializing",
+            "checks": {
+                "intent_engine": "ok",
+                "galaxy_manager": "ok" if engine.galaxy_manager else "missing",
+                "dag_scheduler": "ok" if engine.dag_scheduler else "missing",
+                "grounding_gate": "ok" if engine.grounding_gate else "missing",
+            }
+        }
+    except Exception as e:
+        return {"status": "degraded", "error": str(e)}
