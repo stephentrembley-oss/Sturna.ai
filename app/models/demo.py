@@ -1,8 +1,8 @@
 """Demo and visitor models — Sturna.ai lead generation and nurture system.
 
 Based on Polsia's:
-•  migrations/1753000000000_visitors_demo_sessions.js
-•  migrations/1753200000000_pilot_onboarding.js
+•  migrations/1753000000000000_visitors_demo_sessions.js
+•  migrations/1753200000000000_pilot_onboarding.js
 •  src/cron/post-demo-nurture.js
 •  email-templates/ (5 templates)
 
@@ -217,8 +217,8 @@ class Visitor(Base):
         nullable=True
     )
 
-    # Metadata
-    metadata: Mapped[Dict[str, Any]] = mapped_column(
+    # Metadata (renamed from 'metadata' because it is reserved in SQLAlchemy Declarative)
+    meta: Mapped[Dict[str, Any]] = mapped_column(
         JSONB,
         nullable=False,
         server_default="{}",
@@ -322,8 +322,8 @@ class DemoSession(Base):
         comment="pilot_signup, pro_upgrade, schedule_call"
     )
 
-    # Metadata
-    metadata: Mapped[Dict[str, Any]] = mapped_column(
+    # Metadata (renamed from 'metadata' because it is reserved in SQLAlchemy Declarative)
+    meta: Mapped[Dict[str, Any]] = mapped_column(
         JSONB,
         nullable=False,
         server_default="{}"
