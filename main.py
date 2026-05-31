@@ -47,6 +47,24 @@ async def lifespan(app: FastAPI):
     """Application lifespan: startup and shutdown events."""
     logger.info("sturna_startup", message="Sturna.ai Phase 2+3 starting up", version="2.2.0")
 
+    # === Run database migrations on startup (recommended for Render) ===
+    if os.environ.get("RUN_MIGRATIONS", "false").lower() == "true":
+        try:
+            import subprocess
+            logger.info("running_migrations", status="starting")
+            result = subprocess.run(
+                ["alembic", "upgrade", "head"],
+                capture_output=True,
+                text=True,
+                cwd=os.path.dirname(__file__)
+            )
+            if result.returncode == 0:
+                logger.info("migrations_completed", status="success")
+            else:
+                logger.warning("migrations_failed", stderr=result.stderr)
+        except Exception as e:
+            logger.error("migration_error", error=str(e))
+
     # Wire dependency injection
     intent_engine = get_intent_engine()
     galaxy_manager = get_galaxy_manager()
