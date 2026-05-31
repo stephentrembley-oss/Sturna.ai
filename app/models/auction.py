@@ -175,6 +175,11 @@ class Auction(Base):
         nullable=True,
     )
 
+    # Relationships
+    bids: Mapped[list["AuctionBid"]] = relationship(
+        "AuctionBid", back_populates="auction", cascade="all, delete-orphan"
+    )
+
     __table_args__ = (
         Index("ix_auctions_status_coalition", "status", "coalition"),
         Index("ix_auctions_intent_category", "intent_category"),
@@ -257,6 +262,10 @@ class AuctionBid(Base):
         nullable=False,
         server_default="{}",
     )
+
+    # Relationships
+    auction: Mapped["Auction"] = relationship("Auction", back_populates="bids")
+    agent: Mapped["Agent"] = relationship("Agent")
 
     __table_args__ = (
         Index("ix_bids_auction_agent", "auction_id", "agent_id"),
