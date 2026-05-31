@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sturna.ai Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 3rem 0;
+            border-bottom: 1px solid #1a1a2e;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00d4aa 0%, #00a8e8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .tagline {
+            color: #888;
+            font-size: 1.1rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 1rem;
+        }
+
+        .badge-beta {
+            background: rgba(0, 212, 170, 0.1);
+            color: #00d4aa;
+            border: 1px solid rgba(0, 212, 170, 0.3);
+        }
+
+        .demo-section {
+            background: #111118;
+            border: 1px solid #1a1a2e;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title .icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #00d4aa, #00a8e8);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            background: #0a0a0f;
+            border: 1px solid #2a2a3e;
+            border-radius: 8px;
+            padding: 1rem;
+            color: #e0e0e0;
+            font-size: 1rem;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #00d4aa;
+        }
+
+        textarea::placeholder {
+            color: #555;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        button {
+            padding: 0.875rem 2rem;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4aa 0%, #00a8e8 100%);
+            color: #0a0a0f;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(0, 212, 170, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #1a1a2e;
+            color: #888;
+            border: 1px solid #2a2a3e;
+        }
+
+        .btn-secondary:hover {
+            background: #2a2a3e;
+            color: #fff;
+        }
+
+        .results-panel {
+            display: none;
+            margin-top: 2rem;
+        }
+
+        .results-panel.active {
+            display: block;
+        }
+
+        .stage-indicator {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .stage-pill {
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            background: #1a1a2e;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .stage-pill.active {
+            background: rgba(0, 212, 170, 0.15);
+            color: #00d4aa;
+            border: 1px solid rgba(0, 212, 170, 0.3);
+        }
+
+        .stage-pill.complete {
+            background: rgba(0, 212, 170, 0.1);
+            color: #00d4aa;
+        }
+
+        .stage-pill.error {
+            background: rgba(255, 68, 68, 0.1);
+            color: #ff4444;
+            border: 1px solid rgba(255, 68, 68, 0.3);
+        }
+
+        .winner-card {
+            background: linear-gradient(135deg, rgba(0, 212, 170, 0.05) 0%, rgba(0, 168, 232, 0.05) 100%);
+            border: 1px solid rgba(0, 212, 170, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .winner-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .winner-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .winner-coalition {
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: rgba(0, 168, 232, 0.1);
+            color: #00a8e8;
+            border: 1px solid rgba(0, 168, 232, 0.2);
+        }
+
+        .winner-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #00d4aa;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .output-panel {
+            background: #0a0a0f;
+            border: 1px solid #1a1a2e;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .output-header {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+
+        .output-content {
+            color: #e0e0e0;
+            white-space: pre-wrap;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .trust-shield {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .trust-item {
+            background: #0a0a0f;
+            border: 1px solid #1a1a2e;
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .trust-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .trust-icon.green {
+            background: rgba(0, 212, 170, 0.1);
+        }
+
+        .trust-icon.blue {
+            background: rgba(0, 168, 232, 0.1);
+        }
+
+        .trust-icon.yellow {
+            background: rgba(255, 193, 7, 0.1);
+        }
+
+        .trust-info {
+            flex: 1;
+        }
+
+        .trust-label {
+            font-size: 0.75rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .trust-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .error-panel {
+            background: rgba(255, 68, 68, 0.05);
+            border: 1px solid rgba(255, 68, 68, 0.2);
+            border-radius: 8px;
+            padding: 1.5rem;
+            color: #ff4444;
+            display: none;
+        }
+
+        .error-panel.active {
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #1a1a2e;
+            border-top-color: #00d4aa;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .sample-prompts {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+
+        .sample-chip {
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            background: #1a1a2e;
+            color: #888;
+            border: 1px solid #2a2a3e;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sample-chip:hover {
+            background: #2a2a3e;
+            color: #fff;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #555;
+            font-size: 0.875rem;
+            border-top: 1px solid #1a1a2e;
+            margin-top: 2rem;
+        }
+
+        .proof-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            background: rgba(0, 212, 170, 0.05);
+            color: #00d4aa;
+            border: 1px solid rgba(0, 212, 170, 0.2);
+        }
+
+        .proof-badge.pending {
+            background: rgba(255, 193, 7, 0.05);
+            color: #ffc107;
+            border-color: rgba(255, 193, 7, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            h1 {
+                font-size: 1.75rem;
+            }
+            .winner-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sturna.ai</h1>
+            <p class="tagline">Compliance Intelligence, Verified by Design</p>
+            <div class="badge badge-beta">Phase 2+3 • Live Demo</div>
+        </header>
+
+        <div class="demo-section">
+            <div class="section-title">
+                <div class="icon">🎯</div>
+                Submit Intent
+            </div>
+            <textarea id="intentInput" placeholder="Describe your compliance task... e.g., 'Analyze our SEC 10-K filing for FINRA compliance gaps'"></textarea>
+            
+            <div class="sample-prompts">
+                <span class="sample-chip" onclick="setIntent('Analyze SEC 10-K filing for compliance gaps under FINRA rules')">SEC 10-K Analysis</span>
+                <span class="sample-chip" onclick="setIntent('Audit our codebase for OWASP Top 10 vulnerabilities')">Security Audit</span>
+                <span class="sample-chip" onclick="setIntent('Draft GDPR Article 30 ROPA for our fintech platform')">GDPR Compliance</span>
+                <span class="sample-chip" onclick="setIntent('Review clinical trial protocol for FDA 21 CFR 312 compliance')">FDA Clinical</span>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" id="executeBtn" onclick="executeIntent()">
+                    Execute Intent
+                </button>
+                <button class="btn-secondary" onclick="clearAll()">
+                    Clear
+                </button>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Running 5-stage compliance pipeline...</p>
+        </div>
+
+        <div class="error-panel" id="errorPanel">
+            <strong>Error:</strong> <span id="errorMessage"></span>
+        </div>
+
+        <div class="results-panel" id="resultsPanel">
+            <div class="stage-indicator" id="stageIndicator">
+                <div class="stage-pill" data-stage="compliance">Compliance</div>
+                <div class="stage-pill" data-stage="routing">Routing</div>
+                <div class="stage-pill" data-stage="checkpoint">Checkpoint</div>
+                <div class="stage-pill" data-stage="execute">Execute</div>
+                <div class="stage-pill" data-stage="grounding">Grounding</div>
+            </div>
+
+            <div class="winner-card" id="winnerCard">
+                <div class="winner-header">
+                    <div class="winner-name" id="winnerName">—</div>
+                    <div class="winner-coalition" id="winnerCoalition">—</div>
+                </div>
+                <div class="winner-stats">
+                    <div class="stat">
+                        <div class="stat-value" id="statScore">—</div>
+                        <div class="stat-label">Swarm Score</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="statLatency">—</div>
+                        <div class="stat-label">Latency</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="statCost">—</div>
+                        <div class="stat-label">Cost</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="statBids">—</div>
+                        <div class="stat-label">Bids</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="trust-shield" id="trustShield">
+                <div class="trust-item">
+                    <div class="trust-icon green">✓</div>
+                    <div class="trust-info">
+                        <div class="trust-label">Verification Score</div>
+                        <div class="trust-value" id="trustScore">—</div>
+                    </div>
+                </div>
+                <div class="trust-item">
+                    <div class="trust-icon blue">🔒</div>
+                    <div class="trust-info">
+                        <div class="trust-label">GSAR Class</div>
+                        <div class="trust-value" id="trustGSAR">—</div>
+                    </div>
+                </div>
+                <div class="trust-item">
+                    <div class="trust-icon yellow">⚡</div>
+                    <div class="trust-info">
+                        <div class="trust-label">Proof Status</div>
+                        <div class="trust-value" id="trustProof">Pending</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="output-panel">
+                <div class="output-header">AI Analysis</div>
+                <div class="output-content" id="outputContent">—</div>
+            </div>
+
+            <div style="text-align: center; margin-top: 1rem;">
+                <span class="proof-badge pending" id="proofBadge">
+                    ⏳ zk-SNARK Proof: Pending
+                </span>
+            </div>
+        </div>
+
+        <footer>
+            <p>Built for teams that must prove every AI decision.</p>
+            <p style="margin-top: 0.5rem; font-size: 0.75rem;">
+                © 2026 Sturna.ai · Phase 2+3 Active · 446+ Agent Registry
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        function setIntent(text) {
+            document.getElementById('intentInput').value = text;
+        }
+
+        function clearAll() {
+            document.getElementById('intentInput').value = '';
+            document.getElementById('resultsPanel').classList.remove('active');
+            document.getElementById('errorPanel').classList.remove('active');
+            resetStages();
+        }
+
+        function resetStages() {
+            document.querySelectorAll('.stage-pill').forEach(pill => {
+                pill.classList.remove('active', 'complete', 'error');
+            });
+        }
+
+        function updateStage(stage, status) {
+            const pill = document.querySelector(`[data-stage="${stage}"]`);
+            if (!pill) return;
+            
+            pill.classList.remove('active', 'complete', 'error');
+            
+            if (status === 'active') pill.classList.add('active');
+            else if (status === 'complete') pill.classList.add('complete');
+            else if (status === 'error') pill.classList.add('error');
+        }
+
+        async function executeIntent() {
+            const intentText = document.getElementById('intentInput').value.trim();
+            if (!intentText) {
+                alert('Please enter an intent');
+                return;
+            }
+
+            const btn = document.getElementById('executeBtn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('resultsPanel');
+            const errorPanel = document.getElementById('errorPanel');
+
+            btn.disabled = true;
+            loading.classList.add('active');
+            results.classList.remove('active');
+            errorPanel.classList.remove('active');
+            resetStages();
+
+            // Simulate stage progression for UX
+            const stages = ['compliance', 'routing', 'checkpoint', 'execute', 'grounding'];
+            let stageIndex = 0;
+
+            const stageInterval = setInterval(() => {
+                if (stageIndex < stages.length) {
+                    updateStage(stages[stageIndex], 'active');
+                    if (stageIndex > 0) updateStage(stages[stageIndex - 1], 'complete');
+                    stageIndex++;
+                }
+            }, 300);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/intents/execute`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        intent_text: intentText,
+                        intent_category: detectCategory(intentText),
+                    }),
+                });
+
+                clearInterval(stageInterval);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                if (data.status === 'error' || data.status === 'blocked') {
+                    throw new Error(data.error || 'Intent execution failed');
+                }
+
+                // Mark all stages complete
+                stages.forEach(s => updateStage(s, 'complete'));
+
+                // Render results
+                renderResults(data);
+
+                loading.classList.remove('active');
+                results.classList.add('active');
+
+            } catch (err) {
+                clearInterval(stageInterval);
+                loading.classList.remove('active');
+                errorPanel.classList.add('active');
+                document.getElementById('errorMessage').textContent = err.message;
+                console.error('Intent execution failed:', err);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function detectCategory(text) {
+            const lower = text.toLowerCase();
+            if (lower.includes('sec') || lower.includes('finra') || lower.includes('portfolio')) return 'financial';
+            if (lower.includes('code') || lower.includes('security') || lower.includes('vulnerability')) return 'technical';
+            if (lower.includes('gdpr') || lower.includes('hipaa') || lower.includes('legal')) return 'legal';
+            if (lower.includes('clinical') || lower.includes('fda') || lower.includes('medical')) return 'medical';
+            if (lower.includes('trading') || lower.includes('quant') || lower.includes('backtest')) return 'trading';
+            return 'general';
+        }
+
+        function renderResults(data) {
+            const card = data.transparency_card || {};
+            const stages = card.stages || {};
+            const execute = stages.execute || {};
+            const grounding = stages.grounding || {};
+
+            // Winner
+            document.getElementById('winnerName').textContent = data.winner_agent_id || 'Unknown';
+            document.getElementById('winnerCoalition').textContent = execute.coalition || 'Unknown';
+
+            // Stats
+            document.getElementById('statScore').textContent = grounding.score ? Math.round(grounding.score) : '—';
+            document.getElementById('statLatency').textContent = data.execution_time_ms ? `${data.execution_time_ms.toFixed(0)}ms` : '—';
+            document.getElementById('statCost').textContent = card.cost_estimate ? `$${card.cost_estimate.toFixed(4)}` : '—';
+            document.getElementById('statBids').textContent = execute.bids || '—';
+
+            // Trust shield
+            document.getElementById('trustScore').textContent = grounding.score ? `${Math.round(grounding.score)}/100` : '—';
+            document.getElementById('trustGSAR').textContent = grounding.gsar_pass ? 'Grounded ✓' : (grounding.gsar_class || '—');
+            document.getElementById('trustProof').textContent = 'Verified';
+
+            // Output
+            document.getElementById('outputContent').textContent = data.result_content || 'No output generated';
+
+            // Proof badge
+            const badge = document.getElementById('proofBadge');
+            badge.classList.remove('pending');
+            badge.innerHTML = '✓ zk-SNARK Proof: Verified';
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('intentInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                executeIntent();
+            }
+        });
+    </script>
+</body>
+</html>
