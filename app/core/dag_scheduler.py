@@ -296,7 +296,7 @@ class StarDAGScheduler:
         eligible_agents: List[Agent],
         db,
     ) -> Dict[str, Any]:
-        """Create auction, collect bids, execute winner."""
+        """Create auction, collect bids, execute winner with real LLM."""
         from sqlalchemy import update
         
         auction = Auction(
@@ -330,7 +330,8 @@ class StarDAGScheduler:
         
         winner_bid = max(valid_bids, key=lambda b: b.confidence_score)
         
-        execution_result = await self._execute_winner(
+        # === Real LLM Execution (replaces simulation) ===
+        execution_result = await self._execute_winner_real(
             winner_bid.agent_id, intent_text, db
         )
         
@@ -373,16 +374,42 @@ class StarDAGScheduler:
             capability_match_score=0.8,
         )
 
-    async def _execute_winner(self, agent_id: str, intent_text: str, db) -> Dict[str, Any]:
-        """Execute the intent with the winning agent."""
+    async def _execute_winner_real(self, agent_id: str, intent_text: str, db) -> Dict[str, Any]:
+        """Execute intent with real LLM based on agent's configured model."""
+        from app.services.llm_service import get_llm_service
+        from app.models.agent import Agent
+        from sqlalchemy import select
+
         start = datetime.utcnow()
-        await asyncio.sleep(0.1)
+
+        # Get agent config
+        result = await db.execute(select(Agent).where(Agent.agent_id == agent_id))
+        agent = result.scalar_one_or_none()
+
+        model = agent.model_name if agent else "gpt-4o"
+        system_prompt = (
+            "You are a world-class compliance and regulatory expert. "
+            "Provide precise, evidence-based analysis. Cite specific regulations where relevant. "
+            "Be concise but thorough."
+        )
+
+        llm = get_llm_service()
+        llm_result = await llm.generate(
+            prompt=intent_text,
+            model=model,
+            max_tokens=2000,
+            temperature=0.2,
+            system_prompt=system_prompt,
+        )
+
         latency = (datetime.utcnow() - start).total_seconds() * 1000
-        
+
         return {
-            "content": f"[Simulated result for: {intent_text[:50]}...]",
+            "content": llm_result.get("content", "[No response from LLM]"),
             "latency_ms": latency,
             "agent_id": agent_id,
+            "model_used": model,
+            "cost": llm_result.get("cost", 0.0),
         }
 
 
