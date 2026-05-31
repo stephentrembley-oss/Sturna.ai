@@ -1,9 +1,8 @@
-"""Intents API — Primary endpoint for Sturna multi-agent execution.
-This is the main entry point for submitting intents to the system.
-"""
+"""Intents API — Primary endpoint for Sturna multi-agent execution."""
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.base import get_db
@@ -12,26 +11,20 @@ from app.core.intent_engine import get_intent_engine
 router = APIRouter()
 
 
+class IntentRequest(BaseModel):
+    """Request body for intent execution."""
+    intent_text: str
+    intent_category: Optional[str] = None
+    coalition: Optional[str] = None
+    session_id: Optional[str] = None
+
+
 @router.post("/execute")
 async def execute_intent(
-    intent_text: str,
-    intent_category: Optional[str] = None,
-    coalition: Optional[str] = None,
-    session_id: Optional[str] = None,
+    request: IntentRequest,
     db: AsyncSession = Depends(get_db),
 ):
-    """Execute an intent through the full 5-stage pipeline.
-    This is the main entry point for the Sturna multi-agent system.
-
-    Args:
-        intent_text: The user's query or task description
-        intent_category: Optional pre-classified category
-        coalition: Optional target coalition (auto-detected if None)
-        session_id: Optional session ID for episodic memory
-
-    Returns:
-        Full IntentResult with winner, proof, transparency card
-    """
+    """Execute an intent through the full 5-stage pipeline."""
     engine = get_intent_engine()
 
     # Inject db into subsystems
@@ -45,10 +38,10 @@ async def execute_intent(
     ds.set_db(db)
 
     result = await engine.execute_intent(
-        intent_text=intent_text,
-        intent_category=intent_category,
-        coalition=coalition,
-        session_id=session_id,
+        intent_text=request.intent_text,
+        intent_category=request.intent_category,
+        coalition=request.coalition,
+        session_id=request.session_id,
         db=db,
     )
 
