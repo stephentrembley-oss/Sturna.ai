@@ -6,7 +6,8 @@ import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 import structlog
@@ -104,6 +105,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# === Serve Static Files from public/ ===
+app.mount("/public", StaticFiles(directory="public"), name="public")
+
+
 # === Middleware ===
 app.add_middleware(
     CORSMiddleware,
@@ -148,6 +153,12 @@ async def add_request_id(request: Request, call_next):
     response = await call_next(request)
     response.headers["X-Request-ID"] = request.state.request_id
     return response
+
+
+# === Clean Demo Route ===
+@app.get("/demo", include_in_schema=False)
+async def demo_page():
+    return FileResponse("public/demo.html")
 
 
 # === Router Mounting ===
