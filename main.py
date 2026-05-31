@@ -93,11 +93,11 @@ async def lifespan(app: FastAPI):
         memory_daemon="ok",
     )
 
-    # Create tables if they don't exist (dev only; use Alembic in production)
+    # Create tables if they don't exist (safe even if some already exist)
     if os.environ.get("AUTO_CREATE_TABLES", "false").lower() == "true":
         async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        logger.info("sturna_db_init", message="Database tables auto-created")
+            await conn.run_sync(lambda sync_conn: Base.metadata.create_all(sync_conn, checkfirst=True))
+        logger.info("sturna_db_init", message="Database tables auto-created (checkfirst=True)")
 
     yield
 
