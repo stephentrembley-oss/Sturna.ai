@@ -21,7 +21,7 @@ async def write_memory(
     memory_type: str = "intent_pattern",
     session_id: Optional[str] = None,
     intent_id: Optional[str] = None,
-    metadata: dict = {},
+    meta: dict = {},
     db: AsyncSession = Depends(get_db),
 ):
     """Write a new memory entry for an agent."""
@@ -35,7 +35,7 @@ async def write_memory(
         memory_type=memory_type,
         session_id=session_id,
         intent_id=intent_id,
-        metadata=metadata,
+        meta=meta,
     )
 
     db.add(memory)
@@ -122,7 +122,7 @@ async def update_memory(
     memory_id: str,
     content: Optional[str] = None,
     status: Optional[str] = None,
-    metadata: Optional[dict] = None,
+    meta: Optional[dict] = None,
     db: AsyncSession = Depends(get_db),
 ):
     """Update or supersede a memory entry."""
@@ -133,8 +133,8 @@ async def update_memory(
         values["content_hash"] = hashlib.sha256(content.encode()).hexdigest()[:64]
     if status:
         values["status"] = status
-    if metadata:
-        values["metadata"] = metadata
+    if meta:
+        values["meta"] = meta
     if values:
         values["updated_at"] = func.now()
         result = await db.execute(
