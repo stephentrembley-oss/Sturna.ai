@@ -110,14 +110,22 @@ app.mount("/public", StaticFiles(directory="public"), name="public")
 
 
 # === Middleware ===
+# CORS - include Render frontend + localhost for development
+origins = [
+    "https://sturna.ai",
+    "https://octomind-9fce.polsia.app",
+    "https://sturna-ai-s862.onrender.com",  # Current Render deployment
+    "http://localhost:3000",
+    "http://localhost:8000",
+]
+
+# Allow any Render preview URLs (safe for pre-production)
+if os.environ.get("RENDER_EXTERNAL_URL"):
+    origins.append(os.environ["RENDER_EXTERNAL_URL"])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://sturna.ai",
-        "https://octomind-9fce.polsia.app",
-        "http://localhost:3000",
-        "http://localhost:8000",
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
