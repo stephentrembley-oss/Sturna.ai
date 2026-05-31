@@ -98,9 +98,6 @@ class IntentEngine:
     def set_grounding_gate(self, gg):
         self.grounding_gate = gg
 
-    def set_audit_logger(self, al):
-        self.audit_logger = al
-
     async def execute_intent(
         self,
         intent_text: str,
@@ -241,22 +238,101 @@ class IntentEngine:
         checkpoint_id = f"chk-{intent_id}"
         return {"id": checkpoint_id, "audit": {"intent_id": intent_id, "coalition": coalition, "eligible": [a.agent_id for a in eligible_agents]}}
 
-    async def _stage4_execute(self, intent_id, intent_text, coalition, eligible_agents, checkpoint, db):
+    async def _stage4_execute(
+        self,
+        intent_id: str,
+        intent_text: str,
+        coalition: str,
+        eligible_agents: List[Agent],
+        checkpoint: Dict,
+        db,
+    ) -> Dict[str, Any]:
         """Stage 4: StarDAG Execute — Auction + Winner Execution."""
         if not self.dag_scheduler:
             raise RuntimeError("StarDAGScheduler not injected")
-        return await self.dag_scheduler.create_and_run_auction(
-            intent_id=intent_id, intent_text=intent_text, coalition=coalition,
-            eligible_agents=eligible_agents, db=db
+        
+        # Create auction and run
+        auction_result = await self.dag_scheduler.create_and_run_auction(
+            intent_id=intent_id,
+            intent_text=intent_text,
+            coalition=coalition,
+            eligible_agents=eligible_agents,
+            db=db,
         )
+        
+        # Write execution memory for winner
+        if auction_result.get("winner_agent_id") and not auction_result.get("failed"):
+            from app.services.memory import MemoryService
+            memory_service = MemoryService(db)
+            
+            await memory_service.write_memory(
+                agent_id=auction_result["winner_agent_id"],
+                content=f"Executed intent: {intent_text[:200]}. Result: {auction_result.get('result_content', '')[:300]}",
+                tier="recall",
+                memory_type="intent_pattern",
+                intent_id=intent_id,
+                metadata={
+                    "coalition": coalition,
+                    "latency_ms": auction_result.get("execution_time_ms", 0),
+                    "cost": auction_result.get("cost", 0),
+                    "bid_count": auction_result.get("bid_count", 0),
+                },
+            )
+        
+        logger.info(
+            "stage4_execute",
+            intent_id=intent_id,
+            winner=auction_result.get("winner_agent_id"),
+            bid_count=auction_result.get("bid_count"),
+        )
+        
+        return auction_result
 
-    async def _stage5_grounding(self, intent_id, result_content, winner_agent_id, db):
-        """Stage 5: Factual Grounding Gate."""
-        if not self.grounding_gate:
-            return {"score": 85.0, "gsar_pass": True, "sources": []}
-        return await self.grounding_gate.verify(
-            content=result_content, agent_id=winner_agent_id, intent_id=intent_id
+    async def _stage5_grounding(
+        self,
+        intent_id: str,
+        result_content: str,
+        winner_agent_id: str,
+        db,
+    ) -> Dict[str, Any]:
+        """Stage 5: Factual Grounding Gate + Verification Service."""
+        from app.services.verification import get_verification_service
+        
+        verification_service = get_verification_service()
+        
+        result = await verification_service.verify_intent_output(
+            content=result_content,
+            agent_id=winner_agent_id,
+            intent_id=intent_id,
         )
+        
+        # Write verification memory
+        from app.services.memory import MemoryService
+        memory_service = MemoryService(db)
+        
+        await memory_service.write_memory(
+            agent_id=winner_agent_id,
+            content=f"Verification result for intent {intent_id}: score={result['score']}, gsar={result['gsar_class']}",
+            tier="core",
+            memory_type="factual_grounding",
+            intent_id=intent_id,
+            metadata={
+                "verification_score": result["score"],
+                "gsar_class": result["gsar_class"],
+                "gsar_pass": result["gsar_pass"],
+                "gates": result["gates"],
+                "hallucination_count": len(result.get("hallucinations", [])),
+            },
+        )
+        
+        logger.info(
+            "stage5_grounding",
+            intent_id=intent_id,
+            score=result["score"],
+            gsar_pass=result["gsar_pass"],
+        )
+        
+        return result
 
 
 # Singleton factory
