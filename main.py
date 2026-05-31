@@ -12,7 +12,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 import structlog
 
+# === Import Base + ALL models so Base.metadata is populated ===
 from app.models.base import engine, Base
+from app.models.agent import Agent
+from app.models.auction import Auction, AuctionBid
+from app.models.memory import AgentMemory, SharedMemory, MemoryDefenseLog
+from app.models.demo import Visitor, DemoSession, PilotOnboarding
+
 from app.api import health, agents, memories, auctions, visitors, demos, intents
 from app.core.intent_engine import get_intent_engine
 from app.core.galaxy_manager import get_galaxy_manager
