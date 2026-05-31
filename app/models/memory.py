@@ -187,8 +187,8 @@ class AgentMemory(Base):
         comment="Downstream memory references"
     )
     
-    # Metadata
-    metadata: Mapped[Dict[str, Any]] = mapped_column(
+    # Metadata (renamed from 'metadata' because it is reserved in SQLAlchemy Declarative)
+    meta: Mapped[Dict[str, Any]] = mapped_column(
         JSONB,
         nullable=False,
         server_default="{}",
@@ -270,7 +270,8 @@ class SharedMemory(Base):
         comment="Vector embedding for semantic search"
     )
     
-    metadata: Mapped[Dict[str, Any]] = mapped_column(
+    # Metadata (renamed from 'metadata' because it is reserved in SQLAlchemy Declarative)
+    meta: Mapped[Dict[str, Any]] = mapped_column(
         JSONB,
         nullable=False,
         server_default="{}",
