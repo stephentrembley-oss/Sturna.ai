@@ -2,6 +2,7 @@
 Run: uvicorn main:app --reload
 """
 import os
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
@@ -43,7 +44,7 @@ logger = structlog.get_logger("sturna")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan: startup and shutdown events."""
-    logger.info("sturna_startup", message="Sturna.ai Phase 2 starting up", version="2.1.0")
+    logger.info("sturna_startup", message="Sturna.ai Phase 2+3 starting up", version="2.2.0")
 
     # Wire dependency injection
     intent_engine = get_intent_engine()
@@ -56,6 +57,13 @@ async def lifespan(app: FastAPI):
     intent_engine.set_dag_scheduler(dag_scheduler)
     intent_engine.set_grounding_gate(grounding_gate)
 
+    # Start memory daemon in background
+    from app.services.memory_daemon import get_memory_daemon
+    memory_daemon = get_memory_daemon()
+
+    daemon_task = asyncio.create_task(memory_daemon.start())
+    logger.info("memory_daemon_started", status="background_task_created")
+
     logger.info(
         "dependencies_wired",
         intent_engine="ok",
@@ -63,6 +71,7 @@ async def lifespan(app: FastAPI):
         dag_scheduler="ok",
         compliance="ok",
         grounding="ok",
+        memory_daemon="ok",
     )
 
     # Create tables if they don't exist (dev only; use Alembic in production)
@@ -73,6 +82,14 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    # Shutdown
+    memory_daemon.stop()
+    daemon_task.cancel()
+    try:
+        await daemon_task
+    except asyncio.CancelledError:
+        pass
+
     logger.info("sturna_shutdown", message="Sturna.ai shutting down")
     await engine.dispose()
 
@@ -80,7 +97,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Sturna.ai",
     description="Compliance Intelligence, Verified by Design. Multi-agent orchestration with cryptographic proof.",
-    version="2.1.0",
+    version="2.2.0",
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
@@ -148,7 +165,7 @@ app.include_router(intents.router, prefix="/api/intents", tags=["Intents"])
 async def root():
     return {
         "service": "Sturna.ai",
-        "version": "2.1.0",
+        "version": "2.2.0",
         "tagline": "Compliance Intelligence, Verified by Design",
         "status": "operational",
         "docs": "/docs",
